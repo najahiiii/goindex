@@ -7,7 +7,7 @@ var authConfig = {
 	"root": "",
 	"gh_user": "",
 	"repo_name": "",
-	"favicon": "//ssl.gstatic.com/docs/doclist/images/drive_2022q3_32dp.png"
+	"favicon": ""
 };
 
 let gd;
@@ -48,7 +48,7 @@ async function handleRequest(request) {
 
 	if (path.substr(-1) == '/' || action != null) {
 		return new Response(html, {
-			status: 200, headers: {'Content-Type': 'text/html; charset=utf-8'}
+			status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' }
 		});
 	} else {
 		const file = await gd.file(path);
@@ -61,7 +61,7 @@ async function apiRequest(request) {
 	const url = new URL(request.url);
 	const path = url.pathname;
 
-	const option = {status: 200, headers: {'Access-Control-Allow-Origin': '*'}};
+	const option = { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } };
 
 	if (path.substr(-1) == '/') {
 		const list = await gd.list(path);
@@ -92,7 +92,7 @@ class googleDrive {
 
 	async file(path) {
 		if (typeof this.files[path] == 'undefined') {
-		this.files[path] = await this._file(path);
+			this.files[path] = await this._file(path);
 		}
 		return this.files[path];
 	}
@@ -104,7 +104,7 @@ class googleDrive {
 		const dir = arr.join('/') + '/';
 		const parent = await this.findPathId(dir);
 		let url = 'https://www.googleapis.com/drive/v3/files';
-		const params = {'includeItemsFromAllDrives': true, 'supportsAllDrives': true};
+		const params = { 'includeItemsFromAllDrives': true, 'supportsAllDrives': true };
 		params.q = `'${parent}' in parents and name = '${name}' and trashed = false and mimeType != 'application/vnd.google-apps.shortcut'`;
 		params.fields = 'files(id, name, mimeType, size , createdTime, modifiedTime)';
 		url += '?' + this.enQuery(params);
@@ -138,7 +138,7 @@ class googleDrive {
 		const files = [];
 		let pageToken;
 		let obj;
-		const params = {'includeItemsFromAllDrives': true, 'supportsAllDrives': true};
+		const params = { 'includeItemsFromAllDrives': true, 'supportsAllDrives': true };
 		params.q = `'${parent}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.shortcut'`;
 		params.orderBy = 'folder,name,modifiedTime desc';
 		params.fields = 'nextPageToken, files(id, name, mimeType, size , modifiedTime)';
@@ -190,7 +190,7 @@ class googleDrive {
 		}
 
 		let url = 'https://www.googleapis.com/drive/v3/files';
-		const params = {'includeItemsFromAllDrives': true, 'supportsAllDrives': true};
+		const params = { 'includeItemsFromAllDrives': true, 'supportsAllDrives': true };
 		params.q = `'${parent}' in parents and mimeType = 'application/vnd.google-apps.folder' and name = '${name}' and trashed = false and mimeType != 'application/vnd.google-apps.shortcut'`;
 		params.fields = 'nextPageToken, files(id, name, mimeType)';
 		url += '?' + this.enQuery(params);
@@ -237,7 +237,7 @@ class googleDrive {
 	async requestOption(headers = {}, method = 'GET') {
 		const accessToken = await this.accessToken();
 		headers['authorization'] = 'Bearer ' + accessToken;
-		return {'method': method, 'headers': headers};
+		return { 'method': method, 'headers': headers };
 	}
 
 	enQuery(data) {
@@ -247,7 +247,7 @@ class googleDrive {
 		}
 		return ret.join('&');
 	}
-	
+
 	sleep(ms) {
 		return new Promise(function (resolve, reject) {
 			let i = 0;
