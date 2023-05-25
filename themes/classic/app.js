@@ -20,9 +20,10 @@ function init() {
 	<h1 id="heading">Index of <?php echo urldecode($path);?></h1>
 	<table id="table">
 	</table>
-	<footer>&copy; 2023 <a href="https://www.zephyrus.id" target="_blank">Zephyrus.id</a></footer>
+	<footer>&copy; 2023 <i id="host"></i>.</footer>
 	`;
 	$('body').html(html);
+	document.getElementById("host").innerHTML = window.location.hostname;
 }
 
 function render(path) {
