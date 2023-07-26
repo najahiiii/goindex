@@ -46,7 +46,14 @@ function title(path) {
 
 function nav(path) {
 	path = decodeURI(path);
-	$('#heading').html('Index of' +  ' ' + path);
+	var segment = "";
+	var sep = "";
+	var lastSegment = "";
+
+	var segment = path.split('/');
+	var lastSegment = segment.pop() || segment.pop();
+	segment.forEach((segment) => sep += "../");
+	$('#heading').html('Index of' + ' ' + sep + lastSegment);
 }
 
 function list(path) {
