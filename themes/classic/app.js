@@ -4,13 +4,14 @@ document.write(`
 h1{border-bottom:1px solid silver;margin-bottom:10px;padding-bottom:10px;white-space:nowrap}
 footer{border-top:1px solid silver;margin-top:10px;padding-top:10px;white-space:nowrap}
 table{border-collapse:collapse;font-family:monospace}
-th{font-weight:700}
-.file-id{text-align:center;padding-left:2em}
+th{font-weight:1000}
 .file-name{text-align:left}
 th.file-name:hover{text-decoration:underline}
-.file-size{padding-left:4em}
-.file-size{text-align:end;white-space:nowrap}
+td.file-name:hover{text-decoration:underline}
+.file-size{text-align:right}
 th.file-size:hover{text-decoration:underline}
+td.file-size:hover{text-decoration:underline}
+th, td {padding-right:10px}
 </style>`);
 
 
@@ -53,7 +54,7 @@ function nav(path) {
 	var segment = path.split('/');
 	var lastSegment = segment.pop() || segment.pop();
 	segment.forEach((segment) => sep += "../");
-	$('#heading').html('Index of' + ' ' + sep + lastSegment);
+	$('#heading').html('Index of' + ' ' + sep + formatName(lastSegment));
 }
 
 function list(path) {
@@ -156,9 +157,9 @@ function formatFileSize(bytes, decimals = 2) {
 }
 
 function formatName(f) {
-	var length = 35;
+	var length = 20;
 	var f = f.length > length ?
-		f.substring(0, length - 3) + "..." + f.substring(f.length - 6):
+		f.substring(0, length - 3) + "..." + f.substring(f.length - 5):
 		f;
 	return f;
 }
