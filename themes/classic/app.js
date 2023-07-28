@@ -42,7 +42,12 @@ function render(path) {
 
 function title(path) {
 	path = decodeURI(path);
-	$('title').html(document.siteName + ' - ' + path);
+	var segment = "";
+	var lastSegment = "";
+
+	var segment = path.split('/');
+	var lastSegment = segment.pop() || segment.pop();
+	$('title').html(document.siteName + ' - ' + lastSegment);
 }
 
 function nav(path) {
