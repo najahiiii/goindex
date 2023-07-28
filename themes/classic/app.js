@@ -144,7 +144,7 @@ function localtime(utc_datetime) {
 	+ ":" + second.substring(second.length-2, second.length);
 }
 
-function formatFileSize(bytes, decimals = 2) {
+function formatFileSize(bytes, decimals = 0) {
     if (!+bytes) return '—'
 
     const k = 1024
