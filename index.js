@@ -65,8 +65,7 @@ async function handleRequest(request) {
     const url = new URL(request.url)
     const path = url.pathname
     const action = url.searchParams.get('a')
-
-    if (path.substring(-1) == '/' || action != null) {
+    if (path.substring(path.length - 1) == '/' || action != null) {
         return new Response(html, {
             status: 200,
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -87,7 +86,7 @@ async function apiRequest(request) {
         headers: { 'Access-Control-Allow-Origin': '*' },
     }
 
-    if (path.substring(-1) == '/') {
+    if (path.substring(path.length - 1) == '/') {
         const list = await gd.list(path)
         return new Response(JSON.stringify(list), option)
     } else {

@@ -28,11 +28,11 @@ function init() {
 
 function render(path) {
     if (path.indexOf('?') > 0) {
-        path = path.substr(0, path.indexOf('?'))
+        path = path.substring(0, path.indexOf('?'))
     }
     title(path)
     nav(path)
-    if (path.substr(-1) == '/') {
+    if (path.substring(path.length - 1) == '/') {
         list(path)
     } else {
         file(path)
@@ -133,8 +133,8 @@ function list_files(path, files) {
 function localtime(utc_datetime) {
     var T_pos = utc_datetime.indexOf('T')
     var Z_pos = utc_datetime.indexOf('Z')
-    var year_month_day = utc_datetime.substr(0, T_pos)
-    var hour_minute_second = utc_datetime.substr(T_pos + 1, Z_pos - T_pos - 1)
+    var year_month_day = utc_datetime.substring(0, T_pos)
+    var hour_minute_second = utc_datetime.substring(T_pos + 1, Z_pos - T_pos - 1)
     var new_datetime = year_month_day + ' ' + hour_minute_second
 
     timestamp = new Date(Date.parse(new_datetime))
