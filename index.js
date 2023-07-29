@@ -7,23 +7,43 @@ var authConfig = {
     root: '',
     gh_user: '',
     repo_name: '',
+    js_cdn: '//cdn.jsdelivr.net/combine/gh/jquery/jquery/dist/jquery.min.js,gh' /** <- DO NOT EDIT !!! */,
+}
+
+var sitesConfig = {
+    type: '',
+    title: '',
+    url: '',
+    descs: '',
+    image: '',
     favicon: '',
 }
+
+/**
+ *
+ * DO NOT EDIT BELOW THIS COMMENT !!!
+ */
 
 let gd
 
 const html = `
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<link rel="icon" href="${authConfig.favicon}">
-		<title>${authConfig.siteName}</title>
-		<script src="//cdn.jsdelivr.net/combine/gh/jquery/jquery/dist/jquery.min.js,gh/${authConfig.gh_user}/${authConfig.repo_name}@${authConfig.hash}/themes/classic/app.js"></script>
-	</head>
-	<body>
-	</body>
-	</html>
-	`
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta content="${sitesConfig.type}" property="og:type"/>
+    <meta content="${sitesConfig.title}" property="og:title"/>
+    <meta content="${sitesConfig.url}" property="og:url"/>
+    <meta content="${sitesConfig.descs}" property="og:description"/>
+    <meta content="${sitesConfig.image}" property="og:image"/>
+    <meta content="${sitesConfig.descs}" name="description"/>
+    <title>${authConfig.siteName}</title>
+    <script src="${authConfig.js_cdn}/${authConfig.gh_user}/${authConfig.repo_name}@${authConfig.hash}/themes/classic/app.js"></script>
+    <link rel="icon" type="image/x-icon" href="${sitesConfig.favicon}"/>
+    </head>
+    <body>
+    </body>
+    </html>
+    `
 
 addEventListener('fetch', (event) => {
     event.respondWith(handleRequest(event.request))
@@ -46,7 +66,7 @@ async function handleRequest(request) {
     const path = url.pathname
     const action = url.searchParams.get('a')
 
-    if (path.substr(-1) == '/' || action != null) {
+    if (path.substring(-1) == '/' || action != null) {
         return new Response(html, {
             status: 200,
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -67,7 +87,7 @@ async function apiRequest(request) {
         headers: { 'Access-Control-Allow-Origin': '*' },
     }
 
-    if (path.substr(-1) == '/') {
+    if (path.substring(-1) == '/') {
         const list = await gd.list(path)
         return new Response(JSON.stringify(list), option)
     } else {
