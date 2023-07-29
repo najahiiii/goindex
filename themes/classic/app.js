@@ -17,7 +17,7 @@ th, td {padding-right:10px}
 function init() {
     document.siteName = $('title').html()
     var html = `
-	<h1 id="heading">Index of <?php echo urldecode($path);?></h1>
+	<h1 id="heading"></h1>
 	<table id="table">
 	</table>
 	<footer>&copy; 2023 <i id="host"></i>.</footer>
@@ -41,24 +41,32 @@ function render(path) {
 
 function title(path) {
     path = decodeURI(path)
-    var segment = ''
-    var lastSegment = ''
+    if (path == '/') {
+        $('title').html('Index of ' + window.location.hostname)
+    } else {
+        var segment = ''
+        var lastSegment = ''
 
-    var segment = path.split('/')
-    var lastSegment = segment.pop() || segment.pop()
-    $('title').html(document.siteName + ' - ' + lastSegment)
+        var segment = path.split('/')
+        var lastSegment = segment.pop() || segment.pop()
+        $('title').html(document.siteName + ' > ' + lastSegment)
+    }
 }
 
 function nav(path) {
     path = decodeURI(path)
-    var segment = ''
-    var sep = ''
-    var lastSegment = ''
+    if (path == '/') {
+        $('#heading').html('Index of ' + window.location.hostname)
+    } else {
+        var segment = ''
+        var sep = ''
+        var lastSegment = ''
 
-    var segment = path.split('/')
-    var lastSegment = segment.pop() || segment.pop()
-    segment.forEach((segment) => (sep += '../'))
-    $('#heading').html('Index of' + ' ' + sep + formatName(lastSegment))
+        var segment = path.split('/')
+        var lastSegment = segment.pop() || segment.pop()
+        segment.forEach((segment) => (sep += '../'))
+        $('#heading').html('Index of ' + sep + formatName(lastSegment))
+    }
 }
 
 function list(path) {
