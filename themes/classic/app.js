@@ -152,7 +152,7 @@ function localtime(utc_datetime) {
     )
 }
 
-function formatFileSize(bytes, decimals = 0) {
+function formatFileSize(bytes, decimals = 1) {
     if (!+bytes) return '—'
 
     const k = 1024
