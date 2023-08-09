@@ -30,8 +30,7 @@ function render(path) {
     if (path.indexOf('?') > 0) {
         path = path.substring(0, path.indexOf('?'))
     }
-    title(path)
-    nav(path)
+    parseInfo(path)
     if (path.substring(path.length - 1) == '/') {
         list(path)
     } else {
@@ -39,32 +38,20 @@ function render(path) {
     }
 }
 
-function title(path) {
+function parseInfo(path) {
     path = decodeURI(path)
     if (path == '/') {
         $('title').html('Index of ' + window.location.hostname)
-    } else {
-        var segment = ''
-        var lastSegment = ''
-
-        var segment = path.split('/')
-        var lastSegment = segment.pop() || segment.pop()
-        $('title').html(document.siteName + ' > ' + lastSegment)
-    }
-}
-
-function nav(path) {
-    path = decodeURI(path)
-    if (path == '/') {
         $('#heading').html('Index of ' + window.location.hostname)
     } else {
         var segment = ''
-        var sep = ''
         var lastSegment = ''
+        var sep = ''
 
         var segment = path.split('/')
         var lastSegment = segment.pop() || segment.pop()
         segment.forEach((segment) => (sep += '../'))
+        $('title').html(document.siteName + ' > ' + lastSegment)
         $('#heading').html('Index of ' + sep + formatName(lastSegment))
     }
 }
