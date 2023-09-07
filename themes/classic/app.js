@@ -168,7 +168,7 @@ function formatName(f) {
     var length = 20
     var f =
         f.length > length
-            ? f.substring(0, length - 3) + '...' + f.substring(f.length - 5)
+            ? f.substring(0, length - 3) + ' ... ' + f.substring(f.length - 5)
             : f
     return f
 }
