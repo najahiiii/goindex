@@ -20,10 +20,10 @@ function init() {
 	<h1 id="heading"></h1>
 	<table id="table">
 	</table>
-	<footer>&copy; 2023 <i id="host"></i>.</footer>
+	<footer>&copy; ${new Date().getFullYear()} <i class="host"></i>.</footer>
 	`
     $('body').html(html)
-    document.getElementById('host').innerHTML = window.location.hostname
+    $('.host').text(window.location.hostname);
 }
 
 function render(path) {
