@@ -3,15 +3,19 @@ document.write(`
 *{box-sizing:border-box}
 h1{border-bottom:1px solid silver;margin-bottom:10px;padding-bottom:10px;white-space:nowrap}
 footer{border-top:1px solid silver;margin-top:10px;padding-top:10px;white-space:nowrap}
-table{border-collapse:collapse;font-family:monospace}
-th{font-weight:1000}
+table{border-collapse:collapse;font-family:monospace;font-size:20px}
 .file-name{text-align:left}
 th.file-name:hover{text-decoration:underline}
 td.file-name:hover{text-decoration:underline}
-.file-size{text-align:right}
+.file-size{text-align:center}
 th.file-size:hover{text-decoration:underline}
 td.file-size:hover{text-decoration:underline}
+th.date:hover{text-decoration:underline}
+.date{text-align:right}
 th, td {padding-right:10px}
+p, a, li {color:#e0e0e0}
+a {color: #1e90ff;text-decoration:none;}
+a:hover {text-decoration:unset;}
 </style>`);
 
 function init() {
@@ -57,7 +61,7 @@ function parseInfo(path) {
 }
 
 function list(path) {
-	var content = `<tr><th class="file-name">Name</th><th class="file-size">Size</th></tr>`;
+	var content = `<tr><th class="file-name">Name</th><th class="file-size">Size</th><th class="date">Date Modified</th></tr>`;
 
 	if (path != '/') {
 		var up = path.split('/');
@@ -91,6 +95,7 @@ function list_files(path, files) {
 		var item = files[i];
 		item['name'] = item['name'];
 		item['mimeType'] = item['mimeType'];
+		item['modifiedTime'] = localtime(item['modifiedTime']);
 		/** Handle directory size **/
 		if (item['size'] == undefined) {
 			item['size'] = null;
@@ -102,6 +107,7 @@ function list_files(path, files) {
 				<tr>
 					<td class="file-name"><a href="${p}">${item['name']}/</a></td>
 					<td class="file-size">${item['size']}</td>
+					<td class="date">${item['modifiedTime']}</td>
 				</tr>
 			`;
 		} else {
@@ -110,6 +116,7 @@ function list_files(path, files) {
 				<tr>
 					<td class="file-name"><a href="${p}">${item['name']}</a></td>
 					<td class="file-size">${item['size']}</td>
+					<td class="date">${item['modifiedTime']}</td>
 				</tr>
 			`;
 		}
@@ -118,38 +125,39 @@ function list_files(path, files) {
 }
 
 function localtime(utc_datetime) {
-	var T_pos = utc_datetime.indexOf('T');
-	var Z_pos = utc_datetime.indexOf('Z');
-	var year_month_day = utc_datetime.substring(0, T_pos);
-	var hour_minute_second = utc_datetime.substring(T_pos + 1, Z_pos - T_pos - 1);
-	var new_datetime = year_month_day + ' ' + hour_minute_second;
+	try {
+		var T_pos = utc_datetime.indexOf('T');
+		var Z_pos = utc_datetime.indexOf('Z');
+		if (T_pos === -1 || Z_pos === -1) {
+			throw new Error('Invalid UTC datetime format');
+		}
 
-	timestamp = new Date(Date.parse(new_datetime));
-	timestamp = timestamp.getTime();
-	timestamp = timestamp / 1000;
+		var year_month_day = utc_datetime.substring(0, T_pos);
+		var hour_minute_second = utc_datetime.substring(T_pos + 1, Z_pos);
 
-	var unixtimestamp = timestamp + 7 * 60 * 60;
+		var new_datetime = year_month_day + ' ' + hour_minute_second;
 
-	var unixtimestamp = new Date(unixtimestamp * 1000);
-	var year = 1900 + unixtimestamp.getYear();
-	var month = '0' + (unixtimestamp.getMonth() + 1);
-	var date = '0' + unixtimestamp.getDate();
-	var hour = '0' + unixtimestamp.getHours();
-	var minute = '0' + unixtimestamp.getMinutes();
-	var second = '0' + unixtimestamp.getSeconds();
-	return (
-		year +
-		'-' +
-		month.substring(month.length - 2, month.length) +
-		'-' +
-		date.substring(date.length - 2, date.length) +
-		' ' +
-		hour.substring(hour.length - 2, hour.length) +
-		':' +
-		minute.substring(minute.length - 2, minute.length) +
-		':' +
-		second.substring(second.length - 2, second.length)
-	);
+		var timestamp = new Date(new_datetime).getTime();
+		if (isNaN(timestamp)) {
+			throw new Error('Invalid date conversion');
+		}
+
+		timestamp += 7 * 60 * 60 * 1000;
+
+		var local_date = new Date(timestamp);
+		var year = local_date.getFullYear();
+		var month = ('0' + (local_date.getMonth() + 1)).slice(-2);
+		var date = ('0' + local_date.getDate()).slice(-2);
+		var hour = ('0' + local_date.getHours()).slice(-2);
+		var minute = ('0' + local_date.getMinutes()).slice(-2);
+		var second = ('0' + local_date.getSeconds()).slice(-2);
+
+		// 03:00:48 2023-07-27
+		return `${hour}:${minute}:${second} ${year}-${month}-${date}`;
+	} catch (error) {
+		console.error('Error converting UTC to local time:', error);
+		return 'Invalid Date';
+	}
 }
 
 function formatFileSize(bytes, decimals = 1) {

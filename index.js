@@ -31,6 +31,9 @@ const html = `
     <!DOCTYPE html>
     <html>
     <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <meta content="${sitesConfig.type}" property="og:type"/>
     <meta content="${sitesConfig.title}" property="og:title"/>
     <meta content="${sitesConfig.url}" property="og:url"/>
@@ -134,8 +137,16 @@ function createErrorResponse(status, title, message, redirectUrl) {
 		<head>
 			<title>Error</title>
 			<meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<meta name="color-scheme" content="light dark">
+            <meta content="${sitesConfig.type}" property="og:type"/>
+            <meta content="${sitesConfig.title}" property="og:title"/>
+            <meta content="${sitesConfig.url}" property="og:url"/>
+            <meta content="${sitesConfig.image}" property="og:image"/>
+            <meta content="${sitesConfig.descs}" property="og:description"/>
+            <link rel="icon" type="image/x-icon" href="${sitesConfig.favicon}"/>
 			<style>
-				body { text-align: center; padding: 50px; }
+				body { font-family: monospace; text-align: center; padding: 50px; }
 				h1 { color: #FF0000; }
 				p { font-size: 18px; }
 				a { color: #0000FF; text-decoration: none; }
