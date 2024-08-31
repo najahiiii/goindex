@@ -1,30 +1,33 @@
 document.write(`
 <style>
-*{box-sizing:border-box}
-h1{border-bottom:1px solid silver;margin-bottom:10px;padding-bottom:10px;white-space:nowrap}
-footer{border-top:1px solid silver;margin-top:10px;padding-top:10px;white-space:nowrap}
-table{border-collapse:collapse;font-family:monospace;font-size:20px}
-.file-name{text-align:left}
+body{-webkit-user-select: none;-ms-user-select: none;user-select: none}
+h1{font-family: "Times New Roman", Times, serif;border-bottom:1px solid silver;margin-bottom:10px;padding-bottom:10px;white-space:nowrap}
+footer{font-family: "Lucida Console", "Courier New", monospace;border-top:1px solid silver;margin-top:10px;padding-top:10px;white-space:nowrap}
+table{border-collapse:collapse;font-family:"Lucida Console", "Courier New", monospace}
 th.file-name:hover{text-decoration:underline}
 td.file-name:hover{text-decoration:underline}
-.file-size{text-align:center}
+.file-name{text-align:left}
 th.file-size:hover{text-decoration:underline}
 td.file-size:hover{text-decoration:underline}
+.file-size{text-align:center}
 th.date:hover{text-decoration:underline}
+td.date:hover{text-decoration:underline}
 .date{text-align:right}
-th, td {padding-right:10px}
-p, a, li {color:#e0e0e0}
-a {color: #1e90ff;text-decoration:none;}
-a:hover {text-decoration:unset;}
+th, td{padding-right:15px}
+p, a, li{color:#e0e0e0}
+a{color: #1e90ff;text-decoration:none}
+a:hover {text-decoration:unset}
 </style>`);
 
 function init() {
 	document.siteName = $('title').html();
 	var html = `
+	<div style="overflow-x:auto;">
 	<h1 id="heading"></h1>
 	<table id="table">
 	</table>
 	<footer>&copy; ${new Date().getFullYear()} <i class="host"></i>.</footer>
+	</div>
 	`;
 	$('body').html(html);
 	$('.host').text(window.location.hostname);
@@ -101,6 +104,7 @@ function list_files(path, files) {
 			item['size'] = null;
 		}
 		item['size'] = formatFileSize(item['size']);
+		item['modifiedTime'] = item['modifiedTime'];
 		if (item['mimeType'] == 'application/vnd.google-apps.folder') {
 			var p = path + item.name + '/';
 			html += `
