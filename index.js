@@ -422,6 +422,9 @@ class googleDrive {
 		return ret.join('&');
 	}
 
+	/**
+     * @param {number} ms
+     */
 	sleep(ms) {
 		return new Promise(function (resolve, reject) {
 			let i = 0;
