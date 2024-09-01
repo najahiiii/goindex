@@ -170,9 +170,20 @@ async function apiRequest(request) {
 	const url = new URL(request.url);
 	const path = url.pathname;
 
+	const origin = request.headers.get('Origin');
+	const host = request.headers.get('Host');
+	const allowedOrigin = `https://${host}`;
+
+	if (origin !== allowedOrigin) {
+		return new Response('Forbidden: Cross-origin requests are not allowed.', {
+			status: 403,
+			headers: { 'Content-Type': 'text/plain' },
+		});
+	}
+
 	const option = {
 		status: 200,
-		headers: { 'Access-Control-Allow-Origin': '*' },
+		headers: { 'Access-Control-Allow-Origin': allowedOrigin },
 	};
 
 	try {
