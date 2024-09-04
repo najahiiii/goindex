@@ -204,7 +204,9 @@ async function apiRequest(request) {
 		}
 
 		const encryptedData = caesarCipherEncrypt(responseData, 3);
-		return new Response(encryptedData, option);
+		const encodedData = btoa(encryptedData);
+
+		return new Response(encodedData, option);
 	} catch (error) {
 		return createErrorResponse(
 			500,
@@ -423,8 +425,8 @@ class googleDrive {
 	}
 
 	/**
-     * @param {number} ms
-     */
+	 * @param {number} ms
+	 */
 	sleep(ms) {
 		return new Promise(function (resolve, reject) {
 			let i = 0;

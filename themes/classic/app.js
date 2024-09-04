@@ -185,8 +185,10 @@ function formatName(f) {
 	return f;
 }
 
-function caesarCipherDecrypt(text, shift) {
-	return text.replace(/[a-zA-Z]/g, function (char) {
+function caesarCipherDecrypt(data, shift) {
+	const decodedData = atob(data);
+
+	const decryptedData = decodedData.replace(/[a-zA-Z]/g, function (char) {
 		let code = char.charCodeAt(0);
 		if (code >= 65 && code <= 90) {
 			return String.fromCharCode(((code - 65 - shift + 26) % 26) + 65);
@@ -195,6 +197,8 @@ function caesarCipherDecrypt(text, shift) {
 		}
 		return char;
 	});
+
+	return decryptedData;
 }
 
 window.onpopstate = function () {
