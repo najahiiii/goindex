@@ -1,22 +1,17 @@
 document.write(`
 <style>
-body{-webkit-user-select: none;-ms-user-select: none;user-select: none}
-h1{font-family: "Times New Roman", Times, serif;border-bottom:1px solid silver;margin-bottom:10px;padding-bottom:10px;white-space:nowrap}
-footer{font-family: "Lucida Console", "Courier New", monospace;border-top:1px solid silver;margin-top:10px;padding-top:10px;white-space:nowrap}
-table{border-collapse:collapse;font-family:"Lucida Console", "Courier New", monospace}
-th.file-name:hover{text-decoration:underline}
-td.file-name:hover{text-decoration:underline}
-.file-name{text-align:left}
-th.file-size:hover{text-decoration:underline}
-td.file-size:hover{text-decoration:underline}
-.file-size{text-align:center}
-th.date:hover{text-decoration:underline}
-td.date:hover{text-decoration:underline}
-.date{text-align:right}
-th, td{padding-right:15px}
-p, a, li{color:#e0e0e0}
-a{color: #1e90ff;text-decoration:none}
-a:hover {text-decoration:unset}
+body {-webkit-user-select: none; -ms-user-select: none; user-select: none;}
+h1, footer, table {font-family: "Lucida Console", "Courier New", monospace; white-space: nowrap;}
+h1 {border-bottom: 1px solid silver; margin-bottom: 10px; padding-bottom: 10px;}
+footer {border-top: 1px solid silver; margin-top: 10px; padding-top: 10px;}
+table {border-collapse: collapse;}
+.file-name, .file-size, .date {padding-right: 15px;}
+.file-name {text-align: left;}
+.file-size, .date {text-align: right;}
+th:hover, td:hover {text-decoration: underline;}
+p, a, li {color: #e0e0e0;}
+a {color: #1e90ff;text-decoration: none;}
+a:hover {text-decoration: unset;}
 </style>`);
 
 function init() {
@@ -94,6 +89,7 @@ function list(path) {
 
 function list_files(path, files) {
 	html = '';
+	totalSize = 0;
 	for (i in files) {
 		var item = files[i];
 		item['name'] = item['name'];
@@ -102,6 +98,8 @@ function list_files(path, files) {
 		/** Handle directory size **/
 		if (item['size'] == undefined) {
 			item['size'] = null;
+		} else {
+			totalSize += parseInt(item['size'], 10);
 		}
 		item['size'] = formatFileSize(item['size']);
 		item['modifiedTime'] = item['modifiedTime'];
@@ -125,6 +123,11 @@ function list_files(path, files) {
 			`;
 		}
 	}
+	usage = totalSize > 0 ? `Disk used: ${formatFileSize(totalSize)} | ` : '';
+	$('.host').text(window.location.hostname);
+	$('footer').html(
+		`${usage}&copy; ${new Date().getFullYear()} <i class="host"></i>.`
+	);
 	$('#table').append(html);
 }
 
