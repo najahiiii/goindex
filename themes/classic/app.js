@@ -16,16 +16,16 @@ a:hover {text-decoration: unset;}
 
 function init() {
 	document.siteName = $('title').html();
+	hostname = window.location.hostname;
 	var html = `
 	<div style="overflow-x:auto;">
 	<h1 id="heading"></h1>
 	<table id="table">
 	</table>
-	<footer>&copy; ${new Date().getFullYear()} <i class="host"></i>.</footer>
+	<footer>&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</footer>
 	</div>
 	`;
 	$('body').html(html);
-	$('.host').text(window.location.hostname);
 }
 
 function render(path) {
@@ -124,9 +124,9 @@ function list_files(path, files) {
 		}
 	}
 	usage = totalSize > 0 ? `Disk used: ${formatFileSize(totalSize)} | ` : '';
-	$('.host').text(window.location.hostname);
+	hostname = window.location.hostname;
 	$('footer').html(
-		`${usage}&copy; ${new Date().getFullYear()} <i class="host"></i>.`
+		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
 	);
 	$('#table').append(html);
 }
