@@ -202,9 +202,7 @@ async function apiRequest(request) {
 			}
 			responseData = JSON.stringify(file);
 		}
-
-		const encryptedData = caesarCipherEncrypt(responseData, 3);
-		const encodedData = btoa(encryptedData);
+		const encodedData = btoa(encodeURIComponent(responseData));
 
 		return new Response(encodedData, option);
 	} catch (error) {
@@ -215,18 +213,6 @@ async function apiRequest(request) {
 			'/'
 		);
 	}
-}
-
-function caesarCipherEncrypt(text, shift) {
-	return text.replace(/[a-zA-Z]/g, function (char) {
-		let code = char.charCodeAt(0);
-		if (code >= 65 && code <= 90) {
-			return String.fromCharCode(((code - 65 + shift) % 26) + 65);
-		} else if (code >= 97 && code <= 122) {
-			return String.fromCharCode(((code - 97 + shift) % 26) + 97);
-		}
-		return char;
-	});
 }
 
 class googleDrive {
