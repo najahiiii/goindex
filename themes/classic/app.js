@@ -15,6 +15,16 @@ a:hover {text-decoration: unset;}
 th.sortable {cursor: pointer; position: relative;}
 th.sortable.asc::after {content: ' ▲'; position: absolute; right: 5px;}
 th.sortable.desc::after {content: ' ▼'; position: absolute; right: 5px;}
+.loading {text-align: center; font-weight: bold; color: #fff; text-shadow: 0 0 5px #00cc00;}
+.loading span {animation: glowCycle 1.5s infinite alternate; display: inline-block;}
+.loading span:nth-child(1) {animation-delay: 0s;}
+.loading span:nth-child(2) {animation-delay: 0.3s;}
+.loading span:nth-child(3) {animation-delay: 0.6s;}
+@keyframes glowCycle {
+    0% { text-shadow: 0 0 5px #99ff99; }
+    50% { text-shadow: 0 0 20px #99ff99, 0 0 30px #99ff99; }
+    100% { text-shadow: 0 0 5px #99ff99; }
+}
 </style>
 `);
 
@@ -79,13 +89,20 @@ function list(path) {
             <td class="date"></td>
         </tr>`;
 	}
-	$('#table').html(content);
 
-	$('#table').append('<tr><td colspan="3">Loading Disk...</td></tr>');
+	$('#table').html(`
+		<tr>
+			<th colspan="3" class="loading">
+				<span>L</span><span>o</span><span>a</span><span>d</span><span>i</span><span>n</span><span>g</span> 
+				<span>D</span><span>i</span><span>s</span><span>k</span><span>.</span><span>.</span><span>.</span>
+			</th>
+		</tr>
+	`);
 
 	$.post(path, function (data) {
 		const obj = jQuery.parseJSON(decodeURIComponent(atob(data)));
-		$('#table').find('tr:contains("Loading")').remove();
+		$('#table').find('.loading').remove();
+		$('#table').html(content);
 		obj ? list_files(path, obj.files) : list(path);
 	});
 
