@@ -10,9 +10,13 @@ table {border-collapse: collapse;}
 .file-size, .date {text-align: right;}
 th:hover, td:hover {text-decoration: underline;}
 p, a, li {color: #e0e0e0;}
-a {color: #1e90ff;text-decoration: none;}
+a {color: #1e90ff; text-decoration: none;}
 a:hover {text-decoration: unset;}
-</style>`);
+th.sortable {cursor: pointer; position: relative;}
+th.sortable.asc::after {content: ' ▲'; position: absolute; right: 5px;}
+th.sortable.desc::after {content: ' ▼'; position: absolute; right: 5px;}
+</style>
+`);
 
 function init() {
 	document.siteName = $('title').html();
@@ -59,74 +63,104 @@ function parseInfo(path) {
 }
 
 function list(path) {
-	var content = `<tr><th class="file-name">Name</th><th class="file-size">Size</th><th class="date">Date Modified</th></tr>`;
+	let content = `
+    <tr>
+        <th class="sortable file-name" data-sort="name">Name</th>
+        <th class="sortable file-size" data-sort="size">Size</th>
+        <th class="sortable date" data-sort="date">Date Modified</th>
+    </tr>`;
 
-	if (path != '/') {
-		var up = path.split('/');
-		up.pop();
-		up.pop();
-		up = up.join('/') + '/';
+	if (path !== '/') {
+		const up = path.split('/').slice(0, -2).join('/') + '/';
 		content += `
-		<tr>
-			<td class="file-name"><a href="${up}">..</a></td>
-			<td class="file-size"></td>
-		</tr>
-		`;
+        <tr>
+            <td class="file-name"><a href="${up}">..</a></td>
+            <td class="file-size"></td>
+            <td class="date"></td>
+        </tr>`;
 	}
 	$('#table').html(content);
 
+	$('#table').append('<tr><td colspan="3">Loading Disk...</td></tr>');
+
 	$.post(path, function (data) {
-		var obj = jQuery.parseJSON(decodeURIComponent(atob(data)));
-		if (typeof obj != 'null') {
-			list_files(path, obj.files);
-		} else {
-			list(path);
-		}
+		const obj = jQuery.parseJSON(decodeURIComponent(atob(data)));
+		$('#table').find('tr:contains("Loading")').remove();
+		obj ? list_files(path, obj.files) : list(path);
+	});
+
+	$(document).on('click', 'th.sortable', function () {
+		const sortBy = $(this).data('sort');
+		const order = $(this).hasClass('asc') ? 'desc' : 'asc';
+		$('th.sortable').removeClass('asc desc');
+		$(this).addClass(order);
+		sortTable(sortBy, order);
 	});
 }
 
 function list_files(path, files) {
-	html = '';
-	totalSize = 0;
-	for (i in files) {
-		var item = files[i];
-		item['name'] = item['name'];
-		item['mimeType'] = item['mimeType'];
-		item['modifiedTime'] = localtime(item['modifiedTime']);
-		/** Handle directory size **/
+	files.sort((a, b) => {
+		return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+	});
+	let html = '';
+	let totalSize = 0;
+
+	for (const item of files) {
+		item.modifiedTime = localtime(item.modifiedTime);
 		if (item['size'] == undefined) {
 			item['size'] = null;
 		} else {
 			totalSize += parseInt(item['size'], 10);
 		}
 		item['size'] = formatFileSize(item['size']);
-		item['modifiedTime'] = item['modifiedTime'];
-		if (item['mimeType'] == 'application/vnd.google-apps.folder') {
-			var p = path + item.name + '/';
+
+		if (item.mimeType === 'application/vnd.google-apps.folder') {
+			const p = path + item.name + '/';
 			html += `
-				<tr>
-					<td class="file-name"><a href="${p}">${item['name']}/</a></td>
-					<td class="file-size">${item['size']}</td>
-					<td class="date">${item['modifiedTime']}</td>
-				</tr>
-			`;
+                <tr>
+                    <td class="file-name"><a href="${p}">${item.name}/</a></td>
+                    <td class="file-size">${item.size}</td>
+                    <td class="date">${item.modifiedTime}</td>
+                </tr>`;
 		} else {
-			var p = path + item.name;
+			const p = path + item.name;
 			html += `
-				<tr>
-					<td class="file-name"><a href="${p}">${item['name']}</a></td>
-					<td class="file-size">${item['size']}</td>
-					<td class="date">${item['modifiedTime']}</td>
-				</tr>
-			`;
+                <tr>
+                    <td class="file-name"><a href="${p}">${item.name}</a></td>
+                    <td class="file-size">${item.size}</td>
+                    <td class="date">${item.modifiedTime}</td>
+                </tr>`;
 		}
 	}
+
 	usage = totalSize > 0 ? `Disk used: ${formatFileSize(totalSize)} | ` : '';
 	hostname = window.location.hostname;
 	$('footer').html(
 		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
 	);
 	$('#table').append(html);
+}
+
+function sortTable(sortBy, order) {
+	const rows = $('#table tr').not(':first');
+	const sortedRows = rows.toArray().sort((a, b) => {
+		const valA = $(a).find(`.${sortBy}`).text().trim();
+		const valB = $(b).find(`.${sortBy}`).text().trim();
+
+		let result;
+		if (sortBy === 'size') {
+			result = parseSize(valA) - parseSize(valB);
+		} else if (sortBy === 'date') {
+			result = new Date(valA).getTime() - new Date(valB).getTime();
+		} else if (sortBy === 'file-name') {
+			result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+		} else {
+			result = 0;
+		}
+		return order === 'asc' ? result : -result;
+	});
+
+	$('#table').append(sortedRows);
 }
 
 function localtime(utc_datetime) {
@@ -157,7 +191,6 @@ function localtime(utc_datetime) {
 		var minute = ('0' + local_date.getMinutes()).slice(-2);
 		var second = ('0' + local_date.getSeconds()).slice(-2);
 
-		// 03:00:48 2023-07-27
 		return `${hour}:${minute}:${second} ${year}-${month}-${date}`;
 	} catch (error) {
 		console.error('Error converting UTC to local time:', error);
@@ -167,14 +200,17 @@ function localtime(utc_datetime) {
 
 function formatFileSize(bytes, decimals = 1) {
 	if (!+bytes) return '—';
-
 	const k = 1024;
 	const dm = decimals < 0 ? 0 : decimals;
 	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
-
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+function parseSize(size) {
+	const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+	const [value, unit] = size.split(' ');
+	return parseFloat(value) * Math.pow(1024, units.indexOf(unit));
 }
 
 function formatName(f) {
