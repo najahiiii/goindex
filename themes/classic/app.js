@@ -19,10 +19,10 @@ function init() {
 	hostname = window.location.hostname;
 	var html = `
 	<div style="overflow-x:auto;">
-	<h1 id="heading"></h1>
-	<table id="table">
-	</table>
-	<footer>&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</footer>
+		<h1 id="heading"></h1>
+		<table id="table">
+		</table>
+		<footer>&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</footer>
 	</div>
 	`;
 	$('body').html(html);
@@ -68,10 +68,8 @@ function list(path) {
 		up = up.join('/') + '/';
 		content += `
 		<tr>
-		<td class="file-name">
-		<a href="${up}">..</a>
-		</td>
-		<td class="file-size"></td>
+			<td class="file-name"><a href="${up}">..</a></td>
+			<td class="file-size"></td>
 		</tr>
 		`;
 	}

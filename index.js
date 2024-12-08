@@ -28,25 +28,25 @@ var sitesConfig = {
 let gd;
 
 const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <meta content="${sitesConfig.type}" property="og:type"/>
-    <meta content="${sitesConfig.title}" property="og:title"/>
-    <meta content="${sitesConfig.url}" property="og:url"/>
-    <meta content="${sitesConfig.image}" property="og:image"/>
-    <meta content="${sitesConfig.descs}" property="og:description"/>
-    <title>${authConfig.siteName}</title>
-    <script src="${authConfig.js_cdn}/${authConfig.gh_user}/${authConfig.repo_name}@${authConfig.hash}/themes/classic/app.js"></script>
-    <link rel="icon" type="image/x-icon" href="${sitesConfig.favicon}"/>
-    </head>
-    <body>
-    </body>
-    </html>
-    `;
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="color-scheme" content="light dark">
+		<meta content="${sitesConfig.type}" property="og:type"/>
+		<meta content="${sitesConfig.title}" property="og:title"/>
+		<meta content="${sitesConfig.url}" property="og:url"/>
+		<meta content="${sitesConfig.image}" property="og:image"/>
+		<meta content="${sitesConfig.descs}" property="og:description"/>
+		<title>${authConfig.siteName}</title>
+		<script src="${authConfig.js_cdn}/${authConfig.gh_user}/${authConfig.repo_name}@${authConfig.hash}/themes/classic/app.js"></script>
+		<link rel="icon" type="image/x-icon" href="${sitesConfig.favicon}"/>
+	</head>
+<body>
+</body>
+</html>
+`;
 
 addEventListener('fetch', (event) => {
 	event.respondWith(handleRequest(event.request));
