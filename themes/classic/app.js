@@ -104,6 +104,7 @@ function list_files(path, files) {
 	});
 	let html = '';
 	let totalSize = 0;
+	let fileCount = 0;
 
 	for (const item of files) {
 		item.modifiedTime = localtime(item.modifiedTime);
@@ -131,9 +132,14 @@ function list_files(path, files) {
                     <td class="date">${item.modifiedTime}</td>
                 </tr>`;
 		}
+
+		fileCount++;
 	}
 
-	usage = totalSize > 0 ? `Disk used: ${formatFileSize(totalSize)} | ` : '';
+	usage =
+		totalSize > 0
+			? `Disk used: ${formatFileSize(totalSize)} | Total files: ${fileCount} | `
+			: '';
 	hostname = window.location.hostname;
 	$('footer').html(
 		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
