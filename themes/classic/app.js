@@ -5,9 +5,11 @@ h1, footer, table {font-family: "Lucida Console", "Courier New", monospace; whit
 h1 {border-bottom: 1px solid silver; margin-bottom: 10px; padding-bottom: 10px;}
 footer {border-top: 1px solid silver; margin-top: 10px; padding-top: 10px;}
 table {border-collapse: collapse;}
+.table-container {max-height: 75vh; overflow-y: auto;}
 .file-name, .file-size, .date {padding-right: 15px;}
 .file-name {text-align: left;}
 .file-size, .date {text-align: right;}
+th {position: sticky; top: 0; z-index: 10;}
 th:hover, td:hover {text-decoration: underline;}
 p, a, li {color: #e0e0e0;}
 a {color: #1e90ff; text-decoration: none;}
@@ -34,8 +36,10 @@ function init() {
 	var html = `
 	<div style="overflow-x:auto;">
 		<h1 id="heading"></h1>
-		<table id="table">
-		</table>
+		<div class="table-container">
+			<table id="table">
+			</table>
+		</div>
 		<footer>&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</footer>
 	</div>
 	`;
@@ -84,7 +88,7 @@ function list(path) {
 		const up = path.split('/').slice(0, -2).join('/') + '/';
 		content += `
         <tr>
-            <td class="file-name"><a href="${up}">..</a></td>
+            <td class="file-name"><a href="${up}" class="re">..</a></td>
             <td class="file-size"></td>
             <td class="date"></td>
         </tr>`;
@@ -136,7 +140,7 @@ function list_files(path, files) {
 			const p = path + item.name + '/';
 			html += `
                 <tr>
-                    <td class="file-name"><a href="${p}">${item.name}/</a></td>
+                    <td class="file-name"><a href="${p}" class="re">${item.name}/</a></td>
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
                 </tr>`;
@@ -221,17 +225,16 @@ function localtime(utc_datetime) {
 	}
 }
 
-function formatFileSize(bytes, decimals = 1) {
-	if (!+bytes) return '—';
-	const k = 1024;
-	const dm = decimals < 0 ? 0 : decimals;
-	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+function formatFileSize(bytes) {
+	if (bytes === null) return '';
+	const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+	const index = Math.floor(Math.log(bytes) / Math.log(1024));
+	const size = (bytes / Math.pow(1024, index)).toFixed(2);
+	return `${size} ${units[index]}`;
 }
 
 function parseSize(size) {
-	const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+	const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 	const [value, unit] = size.split(' ');
 	return parseFloat(value) * Math.pow(1024, units.indexOf(unit));
 }
@@ -253,7 +256,9 @@ window.onpopstate = function () {
 $(function () {
 	init();
 	var path = window.location.pathname;
-	$('body').on('click', '.folder', function () {
+	$('body').on('click', '.re', function (e) {
+		e.preventDefault();
+
 		var url = $(this).attr('href');
 		history.pushState(null, null, url);
 		render(url);
