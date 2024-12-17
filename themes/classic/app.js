@@ -1,12 +1,13 @@
 document.write(`
 <style>
 body {-webkit-user-select: none; -ms-user-select: none; user-select: none;}
+.div-container {overflow-x:auto;}
 h1, footer, table {font-family: "Lucida Console", "Courier New", monospace; white-space: nowrap;}
-h1 {border-bottom: 1px solid silver; margin-bottom: 10px; padding-bottom: 10px;}
+h1 {border-bottom: 1px solid silver; margin-top: 10px; margin-bottom: 10px; padding-bottom: 10px;}
 footer {border-top: 1px solid silver; margin-top: 10px; padding-top: 10px;}
 table {border-collapse: collapse;}
 .table-container {max-height: 75vh; overflow-y: auto;}
-.file-name, .file-size, .date {padding-right: 15px;}
+.number, .file-name, .file-size, .date {padding-right: 15px;}
 .file-name {text-align: left;}
 .file-size, .date {text-align: right;}
 th {position: sticky; top: 0; z-index: 10;}
@@ -15,8 +16,8 @@ p, a, li {color: #e0e0e0;}
 a {color: #1e90ff; text-decoration: none;}
 a:hover {text-decoration: unset;}
 th.sortable {cursor: pointer; position: relative;}
-th.sortable.asc::after {content: ' ▲'; position: absolute; right: 5px;}
-th.sortable.desc::after {content: ' ▼'; position: absolute; right: 5px;}
+th.sortable.asc::after {content: '  ▲'; position: absolute; right: 5px;}
+th.sortable.desc::after {content: '  ▼'; position: absolute; right: 5px;}
 .loading {text-align: center; font-weight: bold; color: #fff; text-shadow: 0 0 5px #00cc00;}
 .loading span {animation: glowCycle 1.5s infinite alternate; display: inline-block;}
 .loading span:nth-child(1) {animation-delay: 0s;}
@@ -34,7 +35,7 @@ function init() {
 	document.siteName = $('title').html();
 	hostname = window.location.hostname;
 	var html = `
-	<div style="overflow-x:auto;">
+	<div class="div-container">
 		<h1 id="heading"></h1>
 		<div class="table-container">
 			<table id="table">
@@ -79,6 +80,7 @@ function parseInfo(path) {
 function list(path) {
 	let content = `
     <tr>
+		<th class="sortable number" data-sort="number">#</th>
         <th class="sortable file-name" data-sort="name">Name</th>
         <th class="sortable file-size" data-sort="size">Size</th>
         <th class="sortable date" data-sort="date">Date Modified</th>
@@ -87,16 +89,17 @@ function list(path) {
 	if (path !== '/') {
 		const up = path.split('/').slice(0, -2).join('/') + '/';
 		content += `
-        <tr>
-            <td class="file-name"><a href="${up}" class="re">..</a></td>
-            <td class="file-size"></td>
-            <td class="date"></td>
+		<tr>
+			<td class="number"></td>
+			<td class="file-name"><a href="${up}" class="re">..</a></td>
+			<td class="file-size"></td>
+			<td class="date"></td>
         </tr>`;
 	}
 
 	$('#table').html(`
 		<tr>
-			<th colspan="3" class="loading">
+			<th colspan="4" class="loading">
 				<span>L</span><span>o</span><span>a</span><span>d</span><span>i</span><span>n</span><span>g</span> 
 				<span>D</span><span>i</span><span>s</span><span>k</span><span>.</span><span>.</span><span>.</span>
 			</th>
@@ -126,6 +129,7 @@ function list_files(path, files) {
 	let html = '';
 	let totalSize = 0;
 	let fileCount = 0;
+	let number = 1;
 
 	for (const item of files) {
 		item.modifiedTime = localtime(item.modifiedTime);
@@ -140,7 +144,10 @@ function list_files(path, files) {
 			const p = path + item.name + '/';
 			html += `
                 <tr>
-                    <td class="file-name"><a href="${p}" class="re">${item.name}/</a></td>
+					<td class="number">${number++}.</td>
+                    <td class="file-name"><a href="${p}" class="re">${
+				item.name
+			}/</a></td>
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
                 </tr>`;
@@ -148,6 +155,7 @@ function list_files(path, files) {
 			const p = path + item.name;
 			html += `
                 <tr>
+					<td class="number">${number++}.</td>
                     <td class="file-name"><a href="${p}">${item.name}</a></td>
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
@@ -175,7 +183,7 @@ function sortTable(sortBy, order) {
 		const valB = $(b).find(`.${sortBy}`).text().trim();
 
 		let result;
-		if (sortBy === 'size') {
+		if (sortBy === 'file-size') {
 			result = parseSize(valA) - parseSize(valB);
 		} else if (sortBy === 'date') {
 			result = new Date(valA).getTime() - new Date(valB).getTime();
