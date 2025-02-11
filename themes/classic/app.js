@@ -6,7 +6,7 @@ h1, footer, table {font-family: "Lucida Console", "Courier New", monospace; whit
 h1 {border-bottom: 1px solid silver; margin-top: 10px; margin-bottom: 10px; padding-bottom: 10px;}
 footer {border-top: 1px solid silver; margin-top: 10px; padding-top: 10px;}
 table {border-collapse: collapse;}
-.table-container {max-height: 75vh; overflow-y: auto;}
+.table-container {max-height: 85vh; overflow-y: auto;}
 .number, .file-name, .file-size, .date {padding-right: 15px;}
 .file-name {text-align: left;}
 .file-size, .date {text-align: right;}
