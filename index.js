@@ -61,6 +61,10 @@ async function handleRequest(request) {
 		gd = new googleDrive(authConfig);
 	}
 
+	if (request.method === 'OPTIONS') {
+		return handleOptions(request);
+	}
+
 	if (request.method == 'POST') {
 		return apiRequest(request);
 	}
@@ -170,11 +174,9 @@ async function apiRequest(request) {
 	const url = new URL(request.url);
 	const path = url.pathname;
 
-	const origin = request.headers.get('Origin');
-	const host = request.headers.get('Host');
-	const allowedOrigin = `https://${host}`;
+	const originContext = resolveOriginContext(request);
 
-	if (origin !== allowedOrigin && !origin.endsWith('.cloudflare.dev')) {
+	if (!originContext.isAllowed) {
 		return new Response('Forbidden: Cross-origin requests are not allowed.', {
 			status: 403,
 			headers: { 'Content-Type': 'text/plain' },
@@ -183,7 +185,10 @@ async function apiRequest(request) {
 
 	const option = {
 		status: 200,
-		headers: { 'Access-Control-Allow-Origin': allowedOrigin },
+		headers: {
+			'Access-Control-Allow-Origin': originContext.responseOrigin,
+			Vary: 'Origin',
+		},
 	};
 
 	try {
@@ -213,6 +218,31 @@ async function apiRequest(request) {
 			'/'
 		);
 	}
+}
+
+function handleOptions(request) {
+	const originContext = resolveOriginContext(request);
+
+	if (!originContext.isAllowed) {
+		return new Response('Forbidden: Cross-origin requests are not allowed.', {
+			status: 403,
+			headers: { 'Content-Type': 'text/plain' },
+		});
+	}
+
+	const allowHeaders =
+		request.headers.get('Access-Control-Request-Headers') || 'Content-Type';
+
+	return new Response(null, {
+		status: 204,
+		headers: {
+			'Access-Control-Allow-Origin': originContext.responseOrigin,
+			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+			'Access-Control-Allow-Headers': allowHeaders,
+			'Access-Control-Max-Age': '86400',
+			Vary: 'Origin',
+		},
+	});
 }
 
 class googleDrive {
@@ -434,3 +464,25 @@ String.prototype.trim = function (char) {
 	}
 	return this.replace(/^\s+|\s+$/g, '');
 };
+
+function resolveOriginContext(request) {
+	const origin = request.headers.get('Origin') || '';
+	const host = request.headers.get('Host') || '';
+	const primaryOrigin = host ? `https://${host}` : '';
+	const isCloudflareDev =
+		origin.length > 0 && origin.endsWith('.cloudflare.dev');
+	const isSameOrigin = origin.length > 0 && origin === primaryOrigin;
+	const isAllowed = origin.length === 0 || isSameOrigin || isCloudflareDev;
+
+	const responseOrigin =
+		isSameOrigin || isCloudflareDev
+			? origin
+			: primaryOrigin || origin || '*';
+
+	return {
+		origin,
+		primaryOrigin,
+		isAllowed,
+		responseOrigin,
+	};
+}
