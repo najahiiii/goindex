@@ -11,12 +11,15 @@ table {border-collapse: collapse;}
 .file-name {text-align: left;}
 .file-size, .date {text-align: right;}
 .options {text-align: right; white-space: nowrap;}
-.option-icon {display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: none; border: none; color: #1e90ff; cursor: pointer; transition: color 0.2s ease;}
-.option-icon + .option-icon {margin-left: 1px;}
+.option-icon {display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: none; border: none; color: #1e90ff; cursor: pointer; transition: color 0.2s ease;}
+.option-icon + .option-icon {margin-left: 8px;}
 .option-icon:hover {color: #63b3ff;}
 .option-icon.copied {color: #32cd32;}
 a.option-icon {text-decoration: none;}
 button.option-icon {padding: 0;}
+.generate-links-btn {margin-left: 0px; padding: 0px 0px 0px 0px; border: none; background: transparent; color: #1e90ff; cursor: pointer; font-family: inherit; font-size: 0.9em;}
+.generate-links-btn:hover {background: rgba(30, 144, 255, 0.1);}
+.generate-links-btn:disabled {opacity: 0.6; cursor: not-allowed;}
 th {position: sticky; top: 0; z-index: 10;}
 th:hover, td:hover {text-decoration: underline;}
 p, a, li {color: #e0e0e0;}
@@ -39,19 +42,24 @@ th.sortable.desc::after {content: '  ▼'; position: absolute; right: 5px;}
 `);
 
 let lucideReadyPromise;
+let currentDownloadLinks = [];
 
 function init() {
 	document.siteName = $('title').html();
 	const hostname = window.location.hostname;
 	var html = `
-	<div class="div-container">
-		<h1 id="heading"></h1>
-		<div class="table-container">
-			<table id="table">
-			</table>
+		<div class="div-container">
+			<h1 id="heading"></h1>
+			<div class="table-container">
+				<table id="table">
+				</table>
+			</div>
+			<footer>
+				<span id="footer-usage"></span>
+				<button type="button" id="generate-links" class="generate-links-btn" title="Copy download links" hidden>Generate download links</button>
+				<span id="footer-host">&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</span>
+			</footer>
 		</div>
-		<footer>&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.</footer>
-	</div>
 	`;
 	$('body').html(html);
 }
@@ -147,6 +155,7 @@ function list_files(path, files) {
 	let totalSize = 0;
 	let fileCount = 0;
 	let number = 1;
+	currentDownloadLinks = [];
 
 	for (const item of files) {
 		const isoModifiedTime = item.modifiedTime || '';
@@ -179,6 +188,7 @@ function list_files(path, files) {
                     ${optionsCell}
                 </tr>`;
 		} else {
+			const absoluteDownloadUrl = buildAbsoluteUrl(itemPath);
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
@@ -187,6 +197,7 @@ function list_files(path, files) {
                     ${dateCell}
                     ${optionsCell}
                 </tr>`;
+			currentDownloadLinks.push(absoluteDownloadUrl);
 		}
 
 		fileCount++;
@@ -197,9 +208,16 @@ function list_files(path, files) {
 			? `Disk used: ${formatFileSize(totalSize)} | Total files: ${fileCount} | `
 			: '';
 	const hostname = window.location.hostname;
-	$('footer').html(
-		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
+	$('#footer-usage').text(usage);
+	$('#footer-host').html(
+		`&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
 	);
+	const $generateButton = $('#generate-links');
+	if (currentDownloadLinks.length > 0) {
+		$generateButton.prop('disabled', false).removeAttr('hidden');
+	} else {
+		$generateButton.prop('disabled', true).attr('hidden', true);
+	}
 	$('#table').append(html);
 	refreshIcons();
 }
@@ -368,6 +386,24 @@ function handleCopyClick(event, element) {
 		});
 }
 
+function handleGenerateLinks(event, element) {
+	event.preventDefault();
+	const $button = $(element);
+	if (!currentDownloadLinks || currentDownloadLinks.length === 0) {
+		showCopyFeedback($button, 'No files');
+		return;
+	}
+	const linksText = currentDownloadLinks.join('\n');
+	copyToClipboard(linksText)
+		.then(function () {
+			showCopyFeedback($button, 'Links copied!');
+		})
+		.catch(function (error) {
+			console.error('Unable to copy links:', error);
+			showCopyFeedback($button, 'Copy failed');
+		});
+}
+
 function buildAbsoluteUrl(path) {
 	try {
 		return new URL(path, window.location.origin).toString();
@@ -493,6 +529,9 @@ $(function () {
 		console.error('Lucide preload failed:', error);
 	});
 	var path = window.location.pathname;
+	$('body').on('click', '#generate-links', function (e) {
+		handleGenerateLinks(e, this);
+	});
 	$('body').on('click', '.re', function (e) {
 		e.preventDefault();
 
