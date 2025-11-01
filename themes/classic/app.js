@@ -33,7 +33,7 @@ th.sortable.desc::after {content: '  ▼'; position: absolute; right: 5px;}
 
 function init() {
 	document.siteName = $('title').html();
-	hostname = window.location.hostname;
+	const hostname = window.location.hostname;
 	var html = `
 	<div class="div-container">
 		<h1 id="heading"></h1>
@@ -81,8 +81,8 @@ function list(path) {
 	let content = `
     <tr>
 		<th class="sortable number" data-sort="number">#</th>
-        <th class="sortable file-name" data-sort="name">Name</th>
-        <th class="sortable file-size" data-sort="size">Size</th>
+        <th class="sortable file-name" data-sort="file-name">Name</th>
+        <th class="sortable file-size" data-sort="file-size">Size</th>
         <th class="sortable date" data-sort="date">Date Modified</th>
     </tr>`;
 
@@ -110,15 +110,16 @@ function list(path) {
 		const obj = jQuery.parseJSON(decodeURIComponent(atob(data)));
 		$('#table').find('.loading').remove();
 		$('#table').html(content);
+		$('#table')
+			.off('click', 'th.sortable')
+			.on('click', 'th.sortable', function () {
+				const sortBy = $(this).data('sort');
+				const order = $(this).hasClass('asc') ? 'desc' : 'asc';
+				$('th.sortable').removeClass('asc desc');
+				$(this).addClass(order);
+				sortTable(sortBy, order);
+			});
 		obj ? list_files(path, obj.files) : list(path);
-	});
-
-	$(document).on('click', 'th.sortable', function () {
-		const sortBy = $(this).data('sort');
-		const order = $(this).hasClass('asc') ? 'desc' : 'asc';
-		$('th.sortable').removeClass('asc desc');
-		$(this).addClass(order);
-		sortTable(sortBy, order);
 	});
 }
 
@@ -160,16 +161,16 @@ function list_files(path, files) {
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
                 </tr>`;
-		}
-
-		fileCount++;
 	}
 
-	usage =
+	fileCount++;
+	}
+
+	const usage =
 		totalSize > 0
 			? `Disk used: ${formatFileSize(totalSize)} | Total files: ${fileCount} | `
 			: '';
-	hostname = window.location.hostname;
+	const hostname = window.location.hostname;
 	$('footer').html(
 		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
 	);
@@ -179,20 +180,26 @@ function list_files(path, files) {
 function sortTable(sortBy, order) {
 	const rows = $('#table tr').not(':first');
 	const sortedRows = rows.toArray().sort((a, b) => {
-		const valA = $(a).find(`.${sortBy}`).text().trim();
-		const valB = $(b).find(`.${sortBy}`).text().trim();
+			const valA = $(a).find(`.${sortBy}`).text().trim();
+			const valB = $(b).find(`.${sortBy}`).text().trim();
 
-		let result;
-		if (sortBy === 'file-size') {
-			result = parseSize(valA) - parseSize(valB);
-		} else if (sortBy === 'date') {
-			result = new Date(valA).getTime() - new Date(valB).getTime();
-		} else if (sortBy === 'file-name') {
-			result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
-		} else {
-			result = 0;
-		}
-		return order === 'asc' ? result : -result;
+			let result;
+			if (sortBy === 'file-size') {
+				result = parseSize(valA) - parseSize(valB);
+			} else if (sortBy === 'number') {
+				const numberA = parseInt(valA, 10);
+				const numberB = parseInt(valB, 10);
+				const safeA = Number.isNaN(numberA) ? 0 : numberA;
+				const safeB = Number.isNaN(numberB) ? 0 : numberB;
+				result = safeA - safeB;
+			} else if (sortBy === 'date') {
+				result = new Date(valA).getTime() - new Date(valB).getTime();
+			} else if (sortBy === 'file-name') {
+				result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+			} else {
+				result = 0;
+			}
+			return order === 'asc' ? result : -result;
 	});
 
 	$('#table').append(sortedRows);
@@ -234,7 +241,8 @@ function localtime(utc_datetime) {
 }
 
 function formatFileSize(bytes) {
-	if (bytes === null) return '';
+	if (bytes === null || bytes === undefined) return '';
+	if (bytes <= 0) return '0 Bytes';
 	const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
 	const index = Math.floor(Math.log(bytes) / Math.log(1024));
 	const size = (bytes / Math.pow(1024, index)).toFixed(2);
@@ -242,9 +250,20 @@ function formatFileSize(bytes) {
 }
 
 function parseSize(size) {
+	if (!size) {
+		return 0;
+	}
 	const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
-	const [value, unit] = size.split(' ');
-	return parseFloat(value) * Math.pow(1024, units.indexOf(unit));
+	const parts = size.split(' ');
+	if (parts.length < 2) {
+		return 0;
+	}
+	const value = parseFloat(parts[0]);
+	const unitIndex = units.indexOf(parts[1]);
+	if (isNaN(value) || unitIndex === -1) {
+		return 0;
+	}
+	return value * Math.pow(1024, unitIndex);
 }
 
 function formatName(f) {
