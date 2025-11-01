@@ -173,6 +173,7 @@ function list_files(path, files) {
 		const itemPath = path + item.name + (isFolder ? '/' : '');
 		const safeItemPath = escapeAttribute(itemPath);
 		const safeItemName = escapeHtml(item.name);
+		const dataFileName = escapeAttribute(item.name);
 		const optionsCell = buildOptionsCell(itemPath, isFolder, item.name);
 		const dateCell =
 			`<td class="date" data-modified="${escapeAttribute(isoModifiedTime)}">` +
@@ -182,7 +183,7 @@ function list_files(path, files) {
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-					<td class="file-name"><a href="${safeItemPath}" class="re">${safeItemName}/</a></td>
+					<td class="file-name"><a href="${safeItemPath}" class="re" data-file-name="${dataFileName}">${safeItemName}/</a></td>
                     <td class="file-size">${item.size}</td>
                     ${dateCell}
                     ${optionsCell}
@@ -192,7 +193,7 @@ function list_files(path, files) {
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-					<td class="file-name"><a href="${safeItemPath}">${safeItemName}</a></td>
+					<td class="file-name"><a href="${safeItemPath}" data-file-name="${dataFileName}">${safeItemName}</a></td>
                     <td class="file-size">${item.size}</td>
                     ${dateCell}
                     ${optionsCell}
@@ -413,6 +414,19 @@ function buildAbsoluteUrl(path) {
 	}
 }
 
+function triggerDownload(path, fileName) {
+	const absoluteUrl = buildAbsoluteUrl(path);
+	const anchor = document.createElement('a');
+	anchor.href = absoluteUrl;
+	if (fileName) {
+		anchor.setAttribute('download', fileName);
+	}
+	anchor.style.display = 'none';
+	document.body.appendChild(anchor);
+	anchor.click();
+	document.body.removeChild(anchor);
+}
+
 function copyToClipboard(text) {
 	if (navigator.clipboard && navigator.clipboard.writeText) {
 		return navigator.clipboard.writeText(text);
@@ -532,12 +546,24 @@ $(function () {
 	$('body').on('click', '#generate-links', function (e) {
 		handleGenerateLinks(e, this);
 	});
-	$('body').on('click', '.re', function (e) {
-		e.preventDefault();
+	$('body').on('click', '.file-name a', function (e) {
+		const $link = $(this);
+		const url = $link.attr('href');
+		if (!url) {
+			return;
+		}
 
-		var url = $(this).attr('href');
-		history.pushState(null, null, url);
-		render(url);
+		if ($link.hasClass('re') || url.slice(-1) === '/') {
+			e.preventDefault();
+			history.pushState(null, null, url);
+			render(url);
+			return false;
+		}
+
+		e.preventDefault();
+		const fileName =
+			$link.attr('data-file-name') || $link.text().trim() || undefined;
+		triggerDownload(url, fileName);
 		return false;
 	});
 
