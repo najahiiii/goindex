@@ -149,7 +149,10 @@ function list_files(path, files) {
 	let number = 1;
 
 	for (const item of files) {
-		item.modifiedTime = localtime(item.modifiedTime);
+		const isoModifiedTime = item.modifiedTime || '';
+		const displayModifiedTime = isoModifiedTime
+			? localtime(isoModifiedTime)
+			: 'Unknown';
 		if (item['size'] == undefined) {
 			item['size'] = null;
 		} else {
@@ -162,23 +165,26 @@ function list_files(path, files) {
 		const safeItemPath = escapeAttribute(itemPath);
 		const safeItemName = escapeHtml(item.name);
 		const optionsCell = buildOptionsCell(itemPath, isFolder, item.name);
+		const dateCell =
+			`<td class="date" data-modified="${escapeAttribute(isoModifiedTime)}">` +
+			`${escapeHtml(displayModifiedTime)}</td>`;
 
 		if (isFolder) {
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-                    <td class="file-name"><a href="${safeItemPath}" class="re">${safeItemName}/</a></td>
+					<td class="file-name"><a href="${safeItemPath}" class="re">${safeItemName}/</a></td>
                     <td class="file-size">${item.size}</td>
-                    <td class="date">${item.modifiedTime}</td>
+                    ${dateCell}
                     ${optionsCell}
                 </tr>`;
 		} else {
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-                    <td class="file-name"><a href="${safeItemPath}">${safeItemName}</a></td>
+					<td class="file-name"><a href="${safeItemPath}">${safeItemName}</a></td>
                     <td class="file-size">${item.size}</td>
-                    <td class="date">${item.modifiedTime}</td>
+                    ${dateCell}
                     ${optionsCell}
                 </tr>`;
 		}
@@ -214,7 +220,13 @@ function sortTable(sortBy, order) {
 			const safeB = Number.isNaN(numberB) ? 0 : numberB;
 			result = safeA - safeB;
 		} else if (sortBy === 'date') {
-			result = new Date(valA).getTime() - new Date(valB).getTime();
+			const attrA = $(a).find('.date').attr('data-modified');
+			const attrB = $(b).find('.date').attr('data-modified');
+			const dateA = attrA ? Date.parse(attrA) : 0;
+			const dateB = attrB ? Date.parse(attrB) : 0;
+			const safeA = Number.isNaN(dateA) ? 0 : dateA;
+			const safeB = Number.isNaN(dateB) ? 0 : dateB;
+			result = safeA - safeB;
 		} else if (sortBy === 'file-name') {
 			result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
 		} else {
@@ -254,7 +266,7 @@ function localtime(utc_datetime) {
 		var minute = ('0' + local_date.getMinutes()).slice(-2);
 		var second = ('0' + local_date.getSeconds()).slice(-2);
 
-		return `${hour}:${minute}:${second} ${year}-${month}-${date}`;
+		return `${year}-${month}-${date}T${hour}:${minute}:${second}`;
 	} catch (error) {
 		console.error('Error converting UTC to local time:', error);
 		return 'Invalid Date';
