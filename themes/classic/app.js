@@ -7,9 +7,16 @@ h1 {border-bottom: 1px solid silver; margin-top: 10px; margin-bottom: 10px; padd
 footer {border-top: 1px solid silver; margin-top: 10px; padding-top: 10px;}
 table {border-collapse: collapse;}
 .table-container {max-height: 85vh; overflow-y: auto;}
-.number, .file-name, .file-size, .date {padding-right: 15px;}
+.number, .file-name, .file-size, .date, .options {padding-right: 15px;}
 .file-name {text-align: left;}
 .file-size, .date {text-align: right;}
+.options {text-align: right; white-space: nowrap;}
+.option-icon {display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: none; border: none; color: #1e90ff; cursor: pointer; transition: color 0.2s ease;}
+.option-icon + .option-icon {margin-left: 1px;}
+.option-icon:hover {color: #63b3ff;}
+.option-icon.copied {color: #32cd32;}
+a.option-icon {text-decoration: none;}
+button.option-icon {padding: 0;}
 th {position: sticky; top: 0; z-index: 10;}
 th:hover, td:hover {text-decoration: underline;}
 p, a, li {color: #e0e0e0;}
@@ -30,6 +37,8 @@ th.sortable.desc::after {content: '  ▼'; position: absolute; right: 5px;}
 }
 </style>
 `);
+
+let lucideReadyPromise;
 
 function init() {
 	document.siteName = $('title').html();
@@ -84,22 +93,25 @@ function list(path) {
         <th class="sortable file-name" data-sort="file-name">Name</th>
         <th class="sortable file-size" data-sort="file-size">Size</th>
         <th class="sortable date" data-sort="date">Date Modified</th>
+        <th class="options">Opsi</th>
     </tr>`;
 
 	if (path !== '/') {
 		const up = path.split('/').slice(0, -2).join('/') + '/';
+		const safeUp = escapeAttribute(up);
 		content += `
 		<tr>
 			<td class="number"></td>
-			<td class="file-name"><a href="${up}" class="re">..</a></td>
+			<td class="file-name"><a href="${safeUp}" class="re">..</a></td>
 			<td class="file-size"></td>
 			<td class="date"></td>
+			<td class="options"></td>
         </tr>`;
 	}
 
 	$('#table').html(`
 		<tr>
-			<th colspan="4" class="loading">
+			<th colspan="5" class="loading">
 				<span>L</span><span>o</span><span>a</span><span>d</span><span>i</span><span>n</span><span>g</span> 
 				<span>D</span><span>i</span><span>s</span><span>k</span><span>.</span><span>.</span><span>.</span>
 			</th>
@@ -118,6 +130,10 @@ function list(path) {
 				$('th.sortable').removeClass('asc desc');
 				$(this).addClass(order);
 				sortTable(sortBy, order);
+			})
+			.off('click', '.option-icon[data-action="copy"]')
+			.on('click', '.option-icon[data-action="copy"]', function (event) {
+				handleCopyClick(event, this);
 			});
 		obj ? list_files(path, obj.files) : list(path);
 	});
@@ -141,29 +157,33 @@ function list_files(path, files) {
 		}
 		item['size'] = formatFileSize(item['size']);
 
-		if (item.mimeType === 'application/vnd.google-apps.folder') {
-			const p = path + item.name + '/';
+		const isFolder = item.mimeType === 'application/vnd.google-apps.folder';
+		const itemPath = path + item.name + (isFolder ? '/' : '');
+		const safeItemPath = escapeAttribute(itemPath);
+		const safeItemName = escapeHtml(item.name);
+		const optionsCell = buildOptionsCell(itemPath, isFolder, item.name);
+
+		if (isFolder) {
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-                    <td class="file-name"><a href="${p}" class="re">${
-				item.name
-			}/</a></td>
+                    <td class="file-name"><a href="${safeItemPath}" class="re">${safeItemName}/</a></td>
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
+                    ${optionsCell}
                 </tr>`;
 		} else {
-			const p = path + item.name;
 			html += `
                 <tr>
 					<td class="number">${number++}.</td>
-                    <td class="file-name"><a href="${p}">${item.name}</a></td>
+                    <td class="file-name"><a href="${safeItemPath}">${safeItemName}</a></td>
                     <td class="file-size">${item.size}</td>
                     <td class="date">${item.modifiedTime}</td>
+                    ${optionsCell}
                 </tr>`;
-	}
+		}
 
-	fileCount++;
+		fileCount++;
 	}
 
 	const usage =
@@ -175,31 +195,32 @@ function list_files(path, files) {
 		`${usage}&copy; ${new Date().getFullYear()} <i class="host">${hostname}</i>.`
 	);
 	$('#table').append(html);
+	refreshIcons();
 }
 
 function sortTable(sortBy, order) {
 	const rows = $('#table tr').not(':first');
 	const sortedRows = rows.toArray().sort((a, b) => {
-			const valA = $(a).find(`.${sortBy}`).text().trim();
-			const valB = $(b).find(`.${sortBy}`).text().trim();
+		const valA = $(a).find(`.${sortBy}`).text().trim();
+		const valB = $(b).find(`.${sortBy}`).text().trim();
 
-			let result;
-			if (sortBy === 'file-size') {
-				result = parseSize(valA) - parseSize(valB);
-			} else if (sortBy === 'number') {
-				const numberA = parseInt(valA, 10);
-				const numberB = parseInt(valB, 10);
-				const safeA = Number.isNaN(numberA) ? 0 : numberA;
-				const safeB = Number.isNaN(numberB) ? 0 : numberB;
-				result = safeA - safeB;
-			} else if (sortBy === 'date') {
-				result = new Date(valA).getTime() - new Date(valB).getTime();
-			} else if (sortBy === 'file-name') {
-				result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
-			} else {
-				result = 0;
-			}
-			return order === 'asc' ? result : -result;
+		let result;
+		if (sortBy === 'file-size') {
+			result = parseSize(valA) - parseSize(valB);
+		} else if (sortBy === 'number') {
+			const numberA = parseInt(valA, 10);
+			const numberB = parseInt(valB, 10);
+			const safeA = Number.isNaN(numberA) ? 0 : numberA;
+			const safeB = Number.isNaN(numberB) ? 0 : numberB;
+			result = safeA - safeB;
+		} else if (sortBy === 'date') {
+			result = new Date(valA).getTime() - new Date(valB).getTime();
+		} else if (sortBy === 'file-name') {
+			result = valA.localeCompare(valB, undefined, { sensitivity: 'base' });
+		} else {
+			result = 0;
+		}
+		return order === 'asc' ? result : -result;
 	});
 
 	$('#table').append(sortedRows);
@@ -266,6 +287,48 @@ function parseSize(size) {
 	return value * Math.pow(1024, unitIndex);
 }
 
+function buildOptionsCell(itemPath, isFolder, itemName) {
+	const safePath = escapeAttribute(itemPath);
+	const safeName = escapeAttribute(itemName);
+	let cell =
+		`<td class="options">` +
+		`<button type="button" class="option-icon option-copy" data-action="copy" data-path="${safePath}" title="Copy link" aria-label="Copy link">` +
+		`<i data-lucide="copy"></i>` +
+		`</button>`;
+	if (!isFolder) {
+		cell +=
+			`<a href="${safePath}" class="option-icon option-download" data-action="download" title="Download" aria-label="Download" download="${safeName}">` +
+			`<i data-lucide="download"></i>` +
+			`</a>`;
+	}
+	cell += `</td>`;
+	return cell;
+}
+
+function escapeAttribute(value) {
+	if (value === null || value === undefined) {
+		return '';
+	}
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
+}
+
+function escapeHtml(value) {
+	if (value === null || value === undefined) {
+		return '';
+	}
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
 function formatName(f) {
 	var length = 20;
 	var f =
@@ -275,6 +338,138 @@ function formatName(f) {
 	return f;
 }
 
+function handleCopyClick(event, element) {
+	event.preventDefault();
+	const $target = $(element);
+	const dataPath = $target.attr('data-path');
+	if (!dataPath) {
+		return;
+	}
+	const absoluteUrl = buildAbsoluteUrl(dataPath);
+	copyToClipboard(absoluteUrl)
+		.then(function () {
+			showCopyFeedback($target);
+		})
+		.catch(function (error) {
+			console.error('Unable to copy link:', error);
+			showCopyFeedback($target, 'Copy failed');
+		});
+}
+
+function buildAbsoluteUrl(path) {
+	try {
+		return new URL(path, window.location.origin).toString();
+	} catch (error) {
+		console.error('Failed to build absolute URL:', error);
+		return path;
+	}
+}
+
+function copyToClipboard(text) {
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		return navigator.clipboard.writeText(text);
+	}
+	return fallbackCopyText(text);
+}
+
+function fallbackCopyText(text) {
+	return new Promise(function (resolve, reject) {
+		const textarea = document.createElement('textarea');
+		textarea.value = text;
+		textarea.setAttribute('readonly', '');
+		textarea.style.position = 'absolute';
+		textarea.style.left = '-9999px';
+		document.body.appendChild(textarea);
+
+		const selection = document.getSelection();
+		const selectedRange =
+			selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+		textarea.select();
+
+		try {
+			const successful = document.execCommand('copy');
+			if (!successful) {
+				throw new Error('Copy command unsuccessful');
+			}
+			resolve();
+		} catch (error) {
+			reject(error);
+		} finally {
+			document.body.removeChild(textarea);
+			if (selectedRange && selection) {
+				selection.removeAllRanges();
+				selection.addRange(selectedRange);
+			}
+		}
+	});
+}
+
+function showCopyFeedback($element, message) {
+	const feedbackMessage = message || 'Copied!';
+	const originalTitle =
+		$element.data('original-title') !== undefined
+			? $element.data('original-title')
+			: $element.attr('title');
+	if (originalTitle !== undefined) {
+		$element.data('original-title', originalTitle);
+		$element.attr('title', feedbackMessage);
+	} else {
+		$element.attr('title', feedbackMessage);
+	}
+	$element.addClass('copied');
+
+	setTimeout(function () {
+		$element.removeClass('copied');
+		const storedTitle = $element.data('original-title');
+		if (storedTitle !== undefined) {
+			$element.attr('title', storedTitle);
+			$element.removeData('original-title');
+		} else {
+			$element.removeAttr('title');
+		}
+	}, 1500);
+}
+
+function loadLucide() {
+	if (window.lucide) {
+		return Promise.resolve(window.lucide);
+	}
+	if (lucideReadyPromise) {
+		return lucideReadyPromise;
+	}
+	lucideReadyPromise = new Promise(function (resolve, reject) {
+		const script = document.createElement('script');
+		script.src = 'https://unpkg.com/lucide@latest';
+		script.async = true;
+		script.onload = function () {
+			resolve(window.lucide);
+		};
+		script.onerror = function () {
+			reject(new Error('Failed to load Lucide icons'));
+		};
+		document.head.appendChild(script);
+	});
+
+	return lucideReadyPromise.catch(function (error) {
+		console.error(error);
+		lucideReadyPromise = null;
+		throw error;
+	});
+}
+
+function refreshIcons() {
+	loadLucide()
+		.then(function (lucideLib) {
+			if (lucideLib && typeof lucideLib.createIcons === 'function') {
+				lucideLib.createIcons();
+			}
+		})
+		.catch(function (error) {
+			console.error('Unable to refresh icons:', error);
+		});
+}
+
 window.onpopstate = function () {
 	var path = window.location.pathname;
 	render(path);
@@ -282,6 +477,9 @@ window.onpopstate = function () {
 
 $(function () {
 	init();
+	loadLucide().catch(function (error) {
+		console.error('Lucide preload failed:', error);
+	});
 	var path = window.location.pathname;
 	$('body').on('click', '.re', function (e) {
 		e.preventDefault();
